@@ -18,3 +18,37 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firestore
 const db = getFirestore(app);
 
+// Reference to Firestore collection
+const expensesCollection = collection(db, "expenses");
+
+// Get form element
+const expenseForm = document.getElementById('expense-form');
+
+// Add submit event listener
+expenseForm.addEventListener('submit', async (e) => {
+  e.preventDefault(); // stop page from refreshing
+
+  const title = document.getElementById('title').value;
+  const amount = parseFloat(document.getElementById('amount').value);
+
+  try {
+    // Add new document into Firestore
+    await addDoc(expensesCollection, {
+      title: title,
+      amount: amount,
+      createdAt: new Date()
+    });
+
+    alert("Expense Added Successfully! 🎉");
+
+    // Clear the form
+    expenseForm.reset();
+
+    // Optionally: reload expenses list (we'll code that next!)
+  } catch (error) {
+    console.error("Error adding expense: ", error);
+    alert("Failed to add expense!");
+  }
+});
+
+
