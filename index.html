@@ -10,6 +10,16 @@
   <div class="container">
     <h1>Expense Tracker 💸</h1>
 
+    <form id="expense-form">
+    <input type="text" id="title" placeholder="Enter expense title" required>
+    <input type="number" id="amount" placeholder="Enter amount" required>
+    <button type="submit">Add Expense</button>
+  </form>
+
+  <div id="expense-list">
+    <!-- We will show all expenses here -->
+  </div>
+
     <div class="balance">
       <h2>Your Balance</h2>
       <h3 id="balance">$0.00</h3>
