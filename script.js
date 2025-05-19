@@ -8,6 +8,14 @@ import {
   orderBy
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
 // Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyCIgRZCMqbRxo7jhYJCwVoIz3re6L_g8GM",
@@ -21,6 +29,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 // DOM Elements
 const form = document.getElementById('transaction-form');
@@ -32,6 +41,67 @@ const transactionList = document.getElementById('transaction-items');
 const totalIncomeDisplay = document.getElementById('total-income');
 const totalExpenseDisplay = document.getElementById('total-expense');
 const balanceDisplay = document.getElementById('balance');
+
+// 👤 Auth DOM Elements
+const emailInput = document.getElementById('email');
+const passwordInput = document.getElementById('password');
+const loginBtn = document.getElementById('login-btn');
+const signupBtn = document.getElementById('signup-btn');
+const logoutBtn = document.getElementById('logout-btn');
+
+// Auth Handlers
+loginBtn.addEventListener('click', () => {
+  const email = emailInput.value;
+  const password = passwordInput.value;
+  signInWithEmailAndPassword(auth, email, password)
+    .then(() => {
+      message.textContent = "✅ Logged in!";
+      message.style.color = 'green';
+    })
+    .catch((error) => {
+      message.textContent = "❌ Login failed!";
+      message.style.color = 'red';
+      console.error(error.message);
+    });
+});
+
+signupBtn.addEventListener('click', () => {
+  const email = emailInput.value;
+  const password = passwordInput.value;
+  createUserWithEmailAndPassword(auth, email, password)
+    .then(() => {
+      message.textContent = "✅ Signed up!";
+      message.style.color = 'green';
+    })
+    .catch((error) => {
+      message.textContent = "❌ Signup failed!";
+      message.style.color = 'red';
+      console.error(error.message);
+    });
+});
+
+logoutBtn.addEventListener('click', () => {
+  signOut(auth).then(() => {
+    message.textContent = "👋 Logged out!";
+    message.style.color = 'blue';
+  });
+});
+
+// Auth state observer
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    form.style.display = 'block';
+    logoutBtn.style.display = 'inline-block';
+    loadTransactions(); // Load only after login
+  } else {
+    form.style.display = 'none';
+    logoutBtn.style.display = 'none';
+    transactionList.innerHTML = '';
+    totalIncomeDisplay.textContent = '0';
+    totalExpenseDisplay.textContent = '0';
+    balanceDisplay.textContent = '0';
+  }
+});
 
 // Add new transaction
 form.addEventListener('submit', async (e) => {
@@ -84,5 +154,3 @@ function loadTransactions() {
     balanceDisplay.textContent = balance;
   });
 }
-
-loadTransactions();
