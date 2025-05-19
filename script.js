@@ -1,7 +1,4 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
-
-//
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyCIgRZCMqbRxo7jhYJCwVoIz3re6L_g8GM",
   authDomain: "expense-tracker-d5631.firebaseapp.com",
@@ -10,37 +7,57 @@ const firebaseConfig = {
   messagingSenderId: "336895637396",
   appId: "1:336895637396:web:f8a98f8a17ec6cf70a8181"
 };
+
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-// Form DOM elements
-const expenseForm = document.getElementById("expenseForm");
-const statusDiv = document.getElementById("status");
+// DOM elements
+const form = document.getElementById('expense-form');
+const titleInput = document.getElementById('title');
+const amountInput = document.getElementById('amount');
+const message = document.getElementById('message');
+const expenseList = document.getElementById('expense-items');
+const totalDisplay = document.getElementById('total');
 
-expenseForm.addEventListener("submit", async (e) => {
+form.addEventListener('submit', async (e) => {
   e.preventDefault();
+  const title = titleInput.value.trim();
+  const amount = parseFloat(amountInput.value);
 
-  const title = document.getElementById("titleInput").value.trim();
-  const amount = parseFloat(document.getElementById("amountInput").value);
+  if (!title || isNaN(amount)) return;
 
-  if (!title || isNaN(amount)) {
-    alert("Please enter valid values.");
-    return;
-  }
+  await db.collection('expenses').add({
+    title,
+    amount,
+    timestamp: new Date()
+  });
 
-  try {
-    await addDoc(collection(db, "expenses"), {
-      title,
-      amount,
-      timestamp: new Date()
-    });
-    statusDiv.textContent = "✅ Expense added!";
-    statusDiv.style.color = "green";
-    expenseForm.reset();
-  } catch (error) {
-    console.error("Error adding expense:", error);
-    statusDiv.textContent = "❌ Failed to add expense.";
-    statusDiv.style.color = "red";
-  }
+  message.textContent = '✅ Expense added!';
+  message.style.color = 'green';
+  titleInput.value = '';
+  amountInput.value = '';
 });
+
+// Fetch and display expenses
+function loadExpenses() {
+  db.collection('expenses').orderBy('timestamp', 'desc').onSnapshot((snapshot) => {
+    expenseList.innerHTML = '';
+    let total = 0;
+
+    snapshot.forEach((doc) => {
+      const { title, amount } = doc.data();
+      total += amount;
+
+      const li = document.createElement('li');
+      li.textContent = `${title}: ₹${amount}`;
+      expenseList.appendChild(li);
+    });
+
+    totalDisplay.textContent = total;
+  });
+}
+
+// Load on start
+loadExpenses();
+
