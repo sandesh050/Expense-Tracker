@@ -1,8 +1,7 @@
-// Import Firebase app and Firestore
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
-// Your web app's Firebase configuration
+//
 const firebaseConfig = {
   apiKey: "AIzaSyCIgRZCMqbRxo7jhYJCwVoIz3re6L_g8GM",
   authDomain: "expense-tracker-d5631.firebaseapp.com",
@@ -11,44 +10,37 @@ const firebaseConfig = {
   messagingSenderId: "336895637396",
   appId: "1:336895637396:web:f8a98f8a17ec6cf70a8181"
 };
-
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
-// Initialize Firestore
 const db = getFirestore(app);
 
-// Reference to Firestore collection
-const expensesCollection = collection(db, "expenses");
+// Form DOM elements
+const expenseForm = document.getElementById("expenseForm");
+const statusDiv = document.getElementById("status");
 
-// Get form element
-const expenseForm = document.getElementById('expense-form');
+expenseForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-// Add submit event listener
-expenseForm.addEventListener('submit', async (e) => {
-  e.preventDefault(); // stop page from refreshing
+  const title = document.getElementById("titleInput").value.trim();
+  const amount = parseFloat(document.getElementById("amountInput").value);
 
-  const title = document.getElementById('title').value;
-  const amount = parseFloat(document.getElementById('amount').value);
+  if (!title || isNaN(amount)) {
+    alert("Please enter valid values.");
+    return;
+  }
 
   try {
-    // Add new document into Firestore
-    await addDoc(expensesCollection, {
-      title: title,
-      amount: amount,
-      createdAt: new Date()
+    await addDoc(collection(db, "expenses"), {
+      title,
+      amount,
+      timestamp: new Date()
     });
-
-    alert("Expense Added Successfully! 🎉");
-
-    // Clear the form
+    statusDiv.textContent = "✅ Expense added!";
+    statusDiv.style.color = "green";
     expenseForm.reset();
-
-    // Optionally: reload expenses list (we'll code that next!)
   } catch (error) {
-    console.error("Error adding expense: ", error);
-    alert("Failed to add expense!");
+    console.error("Error adding expense:", error);
+    statusDiv.textContent = "❌ Failed to add expense.";
+    statusDiv.style.color = "red";
   }
 });
-
-
