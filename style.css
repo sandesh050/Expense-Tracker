@@ -1,82 +1,45 @@
 body {
-  font-family: 'Poppins', sans-serif;
+  font-family: Arial, sans-serif;
   background-color: #f0f2f5;
   margin: 0;
   padding: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
+  height: 100vh;
 }
 
 .container {
-  background: #fff;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  width: 350px;
-}
-
-h1, h2, h3, h4 {
-  margin: 0;
-  padding: 10px 0;
-}
-
-.balance {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);
+  width: 90%;
+  max-width: 400px;
   text-align: center;
 }
 
-.income-expense {
-  display: flex;
-  justify-content: space-between;
-  margin: 20px 0;
-}
-
-.money {
-  font-size: 20px;
-}
-
-.money.plus {
-  color: green;
-}
-
-.money.minus {
-  color: red;
-}
-
-form input {
+input, button {
   width: 100%;
-  padding: 8px;
-  margin: 5px 0;
+  padding: 0.8rem;
+  margin: 0.5rem 0;
+  border-radius: 5px;
+  border: 1px solid #ccc;
 }
 
-form button {
-  width: 100%;
-  padding: 10px;
-  background-color: #5c6bc0;
-  color: #fff;
+button {
+  background-color: #6366f1;
+  color: white;
+  font-weight: bold;
   border: none;
   cursor: pointer;
-  margin-top: 10px;
-  border-radius: 5px;
 }
 
-form button:hover {
-  background-color: #3949ab;
+button:hover {
+  background-color: #4f46e5;
 }
 
-.list {
-  list-style: none;
-  padding: 0;
-  margin-bottom: 20px;
+.status {
+  margin-top: 1rem;
+  font-weight: bold;
 }
-
-.list li {
-  background: #f9f9f9;
-  padding: 10px;
-  margin-top: 5px;
-  border-left: 5px solid;
-  display: flex;
-  justify-content: space-between;
-}
-
