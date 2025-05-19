@@ -3,23 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Expense Tracker 💸</title>
+  <title>Expense Tracker</title>
   <link rel="stylesheet" href="style.css" />
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
   <div class="container">
     <h1>Expense Tracker 💸</h1>
-    <form id="expenseForm">
-      <input type="text" id="titleInput" placeholder="Enter expense title" required />
-      <input type="number" id="amountInput" placeholder="Enter amount" required />
+    <form id="expense-form">
+      <input type="text" id="title" placeholder="Enter expense title" required />
+      <input type="number" id="amount" placeholder="Enter amount" required />
       <button type="submit">Add Expense</button>
     </form>
-    <div id="status" class="status"></div>
+    <div id="message"></div>
+
+    <div class="expenses-list">
+      <h2>All Expenses</h2>
+      <ul id="expense-items"></ul>
+      <h3>Total: ₹<span id="total">0</span></h3>
+    </div>
   </div>
 
-  <!-- Link script as module -->
-  <script type="module" src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
-
 
