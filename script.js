@@ -1,4 +1,7 @@
-// Firebase config
+// Firebase CDN Modules
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
 const firebaseConfig = {
   apiKey: "AIzaSyCIgRZCMqbRxo7jhYJCwVoIz3re6L_g8GM",
   authDomain: "expense-tracker-d5631.firebaseapp.com",
@@ -8,56 +11,62 @@ const firebaseConfig = {
   appId: "1:336895637396:web:f8a98f8a17ec6cf70a8181"
 };
 
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-// DOM elements
-const form = document.getElementById('expense-form');
 const titleInput = document.getElementById('title');
 const amountInput = document.getElementById('amount');
-const message = document.getElementById('message');
-const expenseList = document.getElementById('expense-items');
-const totalDisplay = document.getElementById('total');
+const typeInput = document.getElementById('type');
+const statusText = document.getElementById('status');
+const balanceText = document.getElementById('balance');
 
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
+async function addTransaction() {
   const title = titleInput.value.trim();
   const amount = parseFloat(amountInput.value);
+  const type = typeInput.value;
 
-  if (!title || isNaN(amount)) return;
+  if (!title || isNaN(amount)) {
+    statusText.style.color = "red";
+    statusText.textContent = "Please enter a valid title and amount.";
+    return;
+  }
 
-  await db.collection('expenses').add({
-    title,
-    amount,
-    timestamp: new Date()
-  });
-
-  message.textContent = '✅ Expense added!';
-  message.style.color = 'green';
-  titleInput.value = '';
-  amountInput.value = '';
-});
-
-// Fetch and display expenses
-function loadExpenses() {
-  db.collection('expenses').orderBy('timestamp', 'desc').onSnapshot((snapshot) => {
-    expenseList.innerHTML = '';
-    let total = 0;
-
-    snapshot.forEach((doc) => {
-      const { title, amount } = doc.data();
-      total += amount;
-
-      const li = document.createElement('li');
-      li.textContent = `${title}: ₹${amount}`;
-      expenseList.appendChild(li);
+  try {
+    await addDoc(collection(db, "transactions"), {
+      title,
+      amount,
+      type,
+      timestamp: new Date()
     });
 
-    totalDisplay.textContent = total;
-  });
+    statusText.style.color = "green";
+    statusText.textContent = "✅ Transaction added!";
+    titleInput.value = '';
+    amountInput.value = '';
+    updateBalance();
+  } catch (error) {
+    statusText.style.color = "red";
+    statusText.textContent = "❌ Error adding transaction.";
+    console.error(error);
+  }
 }
 
-// Load on start
-loadExpenses();
+async function updateBalance() {
+  const snapshot = await getDocs(collection(db, "transactions"));
+  let balance = 0;
 
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    const amount = parseFloat(data.amount);
+    if (data.type === "income") {
+      balance += amount;
+    } else if (data.type === "expense") {
+      balance -= amount;
+    }
+  });
+
+  balanceText.textContent = `Current Balance: ₹${balance}`;
+}
+
+// Initial balance fetch
+updateBalance();
