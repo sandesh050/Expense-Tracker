@@ -67,6 +67,7 @@ function loadTransactions() {
     snapshot.forEach((doc) => {
       const { title, amount, type } = doc.data();
       const li = document.createElement('li');
+      li.className = type === 'income' ? 'income' : 'expense';
       li.textContent = `${type === 'income' ? 'Income' : 'Expense'} - ${title}: ₹${amount}`;
       transactionList.appendChild(li);
 
