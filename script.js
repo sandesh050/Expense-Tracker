@@ -154,3 +154,155 @@ function loadTransactions() {
     balanceDisplay.textContent = balance;
   });
 }
+
+
+
+// POSSIBLE UPDATES
+
+
+
+// --- Check if Firebase is initialized or fallback to localStorage ---
+
+let transactions = []; // local copy
+
+// Try to detect if Firebase is connected
+const firebaseConnected = !!db; // if db is defined and works
+
+// Load transactions from localStorage on page load
+function loadLocalTransactions() {
+  const saved = localStorage.getItem('transactions');
+  if (saved) {
+    transactions = JSON.parse(saved);
+  } else {
+    transactions = [];
+  }
+  renderTransactions();
+}
+
+// Save transactions to localStorage
+function saveLocalTransactions() {
+  localStorage.setItem('transactions', JSON.stringify(transactions));
+}
+
+// Render the transaction list with optional filter
+function renderTransactions(filter = 'all') {
+  transactionList.innerHTML = '';
+  let totalIncome = 0;
+  let totalExpense = 0;
+
+  transactions.forEach((tx, index) => {
+    if (filter !== 'all' && tx.type !== filter) return;
+
+    const li = document.createElement('li');
+    li.className = tx.type === 'income' ? 'income' : 'expense';
+    li.innerHTML = `
+      ${tx.type === 'income' ? '💰' : '💸'} <strong>${tx.title}</strong>: ₹${tx.amount.toFixed(2)}
+      <button class="delete-btn" data-index="${index}" style="margin-left:10px; cursor:pointer; background:none; border:none; color:#e74c3c;">🗑️</button>
+    `;
+    transactionList.appendChild(li);
+
+    if (tx.type === 'income') totalIncome += tx.amount;
+    else totalExpense += tx.amount;
+  });
+
+  totalIncomeDisplay.textContent = totalIncome.toFixed(2);
+  totalExpenseDisplay.textContent = totalExpense.toFixed(2);
+  balanceDisplay.textContent = (totalIncome - totalExpense).toFixed(2);
+
+  // Attach delete button listeners
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const idx = e.target.dataset.index;
+      transactions.splice(idx, 1);
+      saveLocalTransactions();
+      renderTransactions(currentFilter);
+      showMessage('Transaction deleted', 'orange');
+    });
+  });
+}
+
+let currentFilter = 'all';
+
+// Filter buttons dynamically added to UI
+const filterDiv = document.createElement('div');
+filterDiv.style.marginBottom = '15px';
+filterDiv.innerHTML = `
+  <button id="filter-all" style="margin-right:5px;">All</button>
+  <button id="filter-income" style="margin-right:5px;">Income</button>
+  <button id="filter-expense">Expense</button>
+`;
+document.querySelector('.transactions-list').insertBefore(filterDiv, transactionList);
+
+filterDiv.querySelector('#filter-all').addEventListener('click', () => {
+  currentFilter = 'all';
+  renderTransactions(currentFilter);
+});
+filterDiv.querySelector('#filter-income').addEventListener('click', () => {
+  currentFilter = 'income';
+  renderTransactions(currentFilter);
+});
+filterDiv.querySelector('#filter-expense').addEventListener('click', () => {
+  currentFilter = 'expense';
+  renderTransactions(currentFilter);
+});
+
+// Enhanced form submit with validation and fallback to localStorage if Firebase is not available
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const title = titleInput.value.trim();
+  const amount = parseFloat(amountInput.value);
+  const type = typeInput.value;
+
+  if (!title) {
+    showMessage('❌ Title is required', 'red');
+    return;
+  }
+  if (isNaN(amount) || amount <= 0) {
+    showMessage('❌ Enter a valid positive amount', 'red');
+    return;
+  }
+
+  if (firebaseConnected) {
+    try {
+      await addDoc(collection(db, 'transactions'), {
+        title,
+        amount,
+        type,
+        timestamp: new Date()
+      });
+      showMessage('✅ Added successfully via Firebase!', 'green');
+    } catch (err) {
+      showMessage('❌ Firebase error adding transaction', 'red');
+      console.error(err);
+    }
+  } else {
+    // Local fallback
+    transactions.unshift({ title, amount, type, timestamp: new Date() });
+    saveLocalTransactions();
+    renderTransactions(currentFilter);
+    showMessage('✅ Added successfully locally!', 'green');
+  }
+
+  titleInput.value = '';
+  amountInput.value = '';
+});
+
+// Custom show message function
+function showMessage(text, color = 'green') {
+  message.textContent = text;
+  message.style.color = color;
+  setTimeout(() => {
+    message.textContent = '';
+  }, 4000);
+}
+
+// On page load, either load from Firebase or localStorage
+if (firebaseConnected) {
+  // Optionally call loadTransactions here or on login state change (you already do that)
+} else {
+  form.style.display = 'block';
+  logoutBtn.style.display = 'none';
+  loadLocalTransactions();
+}
+
+
