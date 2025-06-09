@@ -9,17 +9,16 @@
 <body>
   <div class="container">
     <h1>Expense Tracker 💸</h1>
-    <div id="welcome-message" style="display:none; text-align:center; margin-bottom: 15px; font-weight: 600; color: #2980b9;"></div>
 
     <!-- 🔐 Auth Section -->
     <div class="auth-section" id="auth-section">
-      <h2>User Login</h2>
+      <h2>User Login / Sign Up</h2>
+      <input type="text" id="name" placeholder="Name (for signup)" />
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
       <div class="auth-buttons">
         <button id="login-btn">Login</button>
         <button id="signup-btn">Sign Up</button>
-        <button id="logout-btn" style="display: none;">Logout</button>
       </div>
     </div>
 
@@ -27,6 +26,7 @@
 
     <!-- 💰 Main App Section -->
     <div id="main-app" style="display: none;">
+      <h2 id="welcome-message"></h2>
       <form id="transaction-form">
         <input type="text" id="title" placeholder="Enter title" required />
         <input type="number" id="amount" placeholder="Enter amount" step="0.01" required />
@@ -45,6 +45,9 @@
         <h2>Balance: ₹<span id="balance">0</span></h2>
       </div>
     </div>
+
+    <!-- 🔘 Logout Button -->
+    <button id="logout-btn" class="fixed-logout" style="display: none;">Logout</button>
   </div>
 
   <script type="module" src="script.js"></script>
