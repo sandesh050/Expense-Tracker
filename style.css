@@ -137,7 +137,6 @@ h1, h2, h3 {
   font-weight: 700;
 }
 
-/* Logout button fixed style */
 #logout-btn {
   position: fixed;
   bottom: 20px;
