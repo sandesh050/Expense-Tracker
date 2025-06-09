@@ -16,7 +16,7 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
-// Firebase config
+// 🔥 Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyCIgRZCMqbRxo7jhYJCwVoIz3re6L_g8GM",
   authDomain: "expense-tracker-d5631.firebaseapp.com",
@@ -26,12 +26,12 @@ const firebaseConfig = {
   appId: "1:336895637396:web:f8a98f8a17ec6cf70a8181"
 };
 
-// Initialize Firebase
+// 🔧 Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// DOM Elements
+// 🔗 DOM Elements
 const form = document.getElementById('transaction-form');
 const titleInput = document.getElementById('title');
 const amountInput = document.getElementById('amount');
@@ -42,19 +42,19 @@ const totalIncomeDisplay = document.getElementById('total-income');
 const totalExpenseDisplay = document.getElementById('total-expense');
 const balanceDisplay = document.getElementById('balance');
 const mainApp = document.getElementById('main-app');
-const authSection = document.querySelector('.auth-section'); // 👈 New line
 
-// Auth DOM Elements
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
 const loginBtn = document.getElementById('login-btn');
 const signupBtn = document.getElementById('signup-btn');
 const logoutBtn = document.getElementById('logout-btn');
+const authSection = document.getElementById('auth-section');
 
-// Auth Handlers
+// 🔐 Auth Listeners
 loginBtn.addEventListener('click', () => {
   const email = emailInput.value;
   const password = passwordInput.value;
+
   signInWithEmailAndPassword(auth, email, password)
     .then(() => {
       message.textContent = "✅ Logged in!";
@@ -70,6 +70,7 @@ loginBtn.addEventListener('click', () => {
 signupBtn.addEventListener('click', () => {
   const email = emailInput.value;
   const password = passwordInput.value;
+
   createUserWithEmailAndPassword(auth, email, password)
     .then(() => {
       message.textContent = "✅ Signed up!";
@@ -89,15 +90,15 @@ logoutBtn.addEventListener('click', () => {
   });
 });
 
-// Auth state observer
+// 👀 Auth State Observer
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    authSection.style.display = 'none';         // 👈 Hide auth form
+    authSection.style.display = 'none';
     logoutBtn.style.display = 'inline-block';
     mainApp.style.display = 'block';
     loadTransactions();
   } else {
-    authSection.style.display = 'block';        // 👈 Show auth form
+    authSection.style.display = 'block';
     logoutBtn.style.display = 'none';
     mainApp.style.display = 'none';
     transactionList.innerHTML = '';
@@ -107,7 +108,7 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// Add new transaction
+// ➕ Add Transaction
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const title = titleInput.value.trim();
@@ -129,7 +130,7 @@ form.addEventListener('submit', async (e) => {
   amountInput.value = '';
 });
 
-// Load transactions and calculate totals
+// 📊 Load Transactions
 function loadTransactions() {
   const q = query(collection(db, 'transactions'), orderBy('timestamp', 'desc'));
 
