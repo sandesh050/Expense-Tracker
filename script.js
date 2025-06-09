@@ -41,9 +41,10 @@ const transactionList = document.getElementById('transaction-items');
 const totalIncomeDisplay = document.getElementById('total-income');
 const totalExpenseDisplay = document.getElementById('total-expense');
 const balanceDisplay = document.getElementById('balance');
-const mainApp = document.getElementById('main-app'); // 👈 Add this line
+const mainApp = document.getElementById('main-app');
+const authSection = document.querySelector('.auth-section'); // 👈 New line
 
-// 👤 Auth DOM Elements
+// Auth DOM Elements
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
 const loginBtn = document.getElementById('login-btn');
@@ -88,17 +89,17 @@ logoutBtn.addEventListener('click', () => {
   });
 });
 
-// ✅ Updated Auth state observer with main-app toggle
+// Auth state observer
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    form.style.display = 'block';
+    authSection.style.display = 'none';         // 👈 Hide auth form
     logoutBtn.style.display = 'inline-block';
-    mainApp.style.display = 'block'; // 👈 Show the app after login
-    loadTransactions(); // Load only after login
+    mainApp.style.display = 'block';
+    loadTransactions();
   } else {
-    form.style.display = 'none';
+    authSection.style.display = 'block';        // 👈 Show auth form
     logoutBtn.style.display = 'none';
-    mainApp.style.display = 'none'; // 👈 Hide app on logout
+    mainApp.style.display = 'none';
     transactionList.innerHTML = '';
     totalIncomeDisplay.textContent = '0';
     totalExpenseDisplay.textContent = '0';
