@@ -41,6 +41,7 @@ const transactionList = document.getElementById('transaction-items');
 const totalIncomeDisplay = document.getElementById('total-income');
 const totalExpenseDisplay = document.getElementById('total-expense');
 const balanceDisplay = document.getElementById('balance');
+const mainApp = document.getElementById('main-app'); // 👈 Add this line
 
 // 👤 Auth DOM Elements
 const emailInput = document.getElementById('email');
@@ -87,15 +88,17 @@ logoutBtn.addEventListener('click', () => {
   });
 });
 
-// Auth state observer
+// ✅ Updated Auth state observer with main-app toggle
 onAuthStateChanged(auth, (user) => {
   if (user) {
     form.style.display = 'block';
     logoutBtn.style.display = 'inline-block';
+    mainApp.style.display = 'block'; // 👈 Show the app after login
     loadTransactions(); // Load only after login
   } else {
     form.style.display = 'none';
     logoutBtn.style.display = 'none';
+    mainApp.style.display = 'none'; // 👈 Hide app on logout
     transactionList.innerHTML = '';
     totalIncomeDisplay.textContent = '0';
     totalExpenseDisplay.textContent = '0';
