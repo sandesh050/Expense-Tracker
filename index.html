@@ -22,26 +22,29 @@
       </div>
     </div>
 
-    <!-- 💰 Transaction Form -->
-    <form id="transaction-form">
-      <input type="text" id="title" placeholder="Enter title" required />
-      <input type="number" id="amount" placeholder="Enter amount" required />
-      <select id="type">
-        <option value="expense">Expense</option>
-        <option value="income">Income</option>
-      </select>
-      <button type="submit">Add</button>
-    </form>
-
     <div id="message"></div>
 
-    <!-- 📋 Transaction List -->
-    <div class="transactions-list">
-      <h2>All Transactions</h2>
-      <ul id="transaction-items"></ul>
-      <h3>Total Expenses: ₹<span id="total-expense">0</span></h3>
-      <h3>Total Income: ₹<span id="total-income">0</span></h3>
-      <h2>Balance: ₹<span id="balance">0</span></h2>
+    <!-- 💰 Main App Section: Hidden until login -->
+    <div id="main-app" style="display: none;">
+      <!-- 💰 Transaction Form -->
+      <form id="transaction-form">
+        <input type="text" id="title" placeholder="Enter title" required />
+        <input type="number" id="amount" placeholder="Enter amount" required />
+        <select id="type">
+          <option value="expense">Expense</option>
+          <option value="income">Income</option>
+        </select>
+        <button type="submit">Add</button>
+      </form>
+
+      <!-- 📋 Transaction List -->
+      <div class="transactions-list">
+        <h2>All Transactions</h2>
+        <ul id="transaction-items"></ul>
+        <h3>Total Expenses: ₹<span id="total-expense">0</span></h3>
+        <h3>Total Income: ₹<span id="total-income">0</span></h3>
+        <h2>Balance: ₹<span id="balance">0</span></h2>
+      </div>
     </div>
   </div>
 
