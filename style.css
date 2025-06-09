@@ -227,3 +227,50 @@ h3, h2 {
     font-size: 1.2rem;
   }
 }
+/* Additional Styles for Delete/Edit buttons and Filter */
+.transaction-actions button {
+  margin-left: 8px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s ease;
+}
+
+.transaction-actions .edit-btn {
+  background-color: #3498db;
+  color: white;
+}
+
+.transaction-actions .edit-btn:hover {
+  background-color: #2980b9;
+}
+
+.transaction-actions .delete-btn {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.transaction-actions .delete-btn:hover {
+  background-color: #c0392b;
+}
+
+.filter-section {
+  margin-bottom: 15px;
+  font-weight: 600;
+  color: #34495e;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-section select {
+  padding: 8px 12px;
+  font-size: 1rem;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
