@@ -5,7 +5,10 @@ import {
   addDoc,
   onSnapshot,
   query,
-  orderBy
+  orderBy,
+  deleteDoc,
+  doc,
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 import {
@@ -51,7 +54,14 @@ const loginBtn = document.getElementById('login-btn');
 const signupBtn = document.getElementById('signup-btn');
 const logoutBtn = document.getElementById('logout-btn');
 
-// Show messages helper
+// Filter element
+const filterSelect = document.getElementById('filter');
+
+// Edit mode vars
+let editMode = false;
+let editDocId = null;
+
+// Show message helper
 function showMessage(text, color = 'green') {
   message.textContent = text;
   message.style.color = color;
@@ -60,7 +70,7 @@ function showMessage(text, color = 'green') {
   }, 4000);
 }
 
-// Login handler
+// Auth handlers
 loginBtn.addEventListener('click', () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
@@ -82,7 +92,6 @@ loginBtn.addEventListener('click', () => {
     });
 });
 
-// Signup handler
 signupBtn.addEventListener('click', () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
@@ -104,107 +113,188 @@ signupBtn.addEventListener('click', () => {
     });
 });
 
-// Logout handler
 logoutBtn.addEventListener('click', () => {
   signOut(auth).then(() => {
     showMessage("👋 Logged out!", 'blue');
   });
 });
 
-// Listen to auth state changes
+// Cancel edit button
+const cancelEditBtn = document.getElementById('cancel-edit-btn');
+cancelEditBtn.addEventListener('click', () => {
+  exitEditMode();
+});
+
+// Enter edit mode helper
+function enterEditMode(docId, data) {
+  editMode = true;
+  editDocId = docId;
+  titleInput.value = data.title;
+  amountInput.value = data.amount;
+  typeInput.value = data.type;
+  document.getElementById('submit-btn').textContent = 'Update';
+  cancelEditBtn.style.display = 'inline-block';
+}
+
+// Exit edit mode helper
+function exitEditMode() {
+  editMode = false;
+  editDocId = null;
+  titleInput.value = '';
+  amountInput.value = '';
+  typeInput.value = 'expense';
+  document.getElementById('submit-btn').textContent = 'Add';
+  cancelEditBtn.style.display = 'none';
+}
+
+// Auth state change listener
+let unsubscribeTransactions = null; // To unsubscribe from Firestore on logout
+let currentFilter = 'all';
+
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    // Show main app and logout btn, hide auth form
     mainApp.style.display = 'block';
     logoutBtn.style.display = 'inline-block';
     authSection.style.display = 'none';
-    loadTransactions(user.uid);
+
+    // Load transactions with filter
+    if (unsubscribeTransactions) unsubscribeTransactions();
+    unsubscribeTransactions = loadTransactions(user.uid);
+
   } else {
-    // Hide main app and logout btn, show auth form
     mainApp.style.display = 'none';
     logoutBtn.style.display = 'none';
     authSection.style.display = 'block';
 
-    // Clear data display
     transactionList.innerHTML = '';
     totalIncomeDisplay.textContent = '0';
     totalExpenseDisplay.textContent = '0';
     balanceDisplay.textContent = '0';
+
+    exitEditMode();
+
+    if (unsubscribeTransactions) {
+      unsubscribeTransactions();
+      unsubscribeTransactions = null;
+    }
   }
 });
 
-// Add new transaction
+// Add or Update transaction
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
-
-  const user = auth.currentUser;
-  if (!user) {
-    showMessage("You must be logged in to add transactions", 'red');
-    return;
-  }
 
   const title = titleInput.value.trim();
   const amount = parseFloat(amountInput.value);
   const type = typeInput.value;
 
-  if (!title || isNaN(amount) || amount <= 0) {
-    showMessage("Please enter valid title and amount", 'red');
+  if (!title) {
+    showMessage('Please enter a title', 'red');
+    return;
+  }
+
+  if (isNaN(amount) || amount <= 0) {
+    showMessage('Please enter a valid positive amount', 'red');
+    return;
+  }
+
+  const user = auth.currentUser;
+  if (!user) {
+    showMessage('You must be logged in to add transactions', 'red');
     return;
   }
 
   try {
-    await addDoc(collection(db, "users", user.uid, "transactions"), {
-      title,
-      amount,
-      type,
-      timestamp: Date.now()
-    });
+    if (editMode && editDocId) {
+      // Update existing transaction
+      const docRef = doc(db, `users/${user.uid}/transactions`, editDocId);
+      await updateDoc(docRef, {
+        title,
+        amount,
+        type,
+        timestamp: new Date()
+      });
+      showMessage('✅ Transaction updated!');
+      exitEditMode();
+    } else {
+      // Add new transaction
+      await addDoc(collection(db, `users/${user.uid}/transactions`), {
+        title,
+        amount,
+        type,
+        timestamp: new Date()
+      });
+      showMessage('✅ Transaction added!');
+    }
 
     titleInput.value = '';
     amountInput.value = '';
-    showMessage("Transaction added!");
+    typeInput.value = 'expense';
+
   } catch (error) {
-    console.error("Error adding document: ", error);
-    showMessage("Failed to add transaction", 'red');
+    showMessage('❌ Failed to save transaction: ' + error.message, 'red');
+    console.error(error);
   }
 });
 
-let unsubscribe = null;
-
-// Load transactions in realtime
+// Load transactions and show totals, apply filter
 function loadTransactions(uid) {
-  if (unsubscribe) {
-    unsubscribe(); // Unsubscribe previous listener if any
-  }
+  const q = query(collection(db, `users/${uid}/transactions`), orderBy('timestamp', 'desc'));
 
-  const q = query(collection(db, "users", uid, "transactions"), orderBy("timestamp", "desc"));
-
-  unsubscribe = onSnapshot(q, (snapshot) => {
+  return onSnapshot(q, (snapshot) => {
+    transactionList.innerHTML = '';
     let totalIncome = 0;
     let totalExpense = 0;
 
-    transactionList.innerHTML = '';
+    // Store transactions temporarily to filter later
+    const transactions = [];
 
     snapshot.forEach((doc) => {
       const data = doc.data();
-
-      const li = document.createElement('li');
-      li.textContent = `${data.title} - ₹${data.amount.toFixed(2)}`;
-      li.classList.add(data.type === 'income' ? 'income' : 'expense');
-      transactionList.appendChild(li);
-
-      if (data.type === 'income') {
-        totalIncome += data.amount;
-      } else {
-        totalExpense += data.amount;
-      }
+      transactions.push({ id: doc.id, ...data });
     });
 
+    // Filter transactions based on currentFilter
+    let filteredTransactions = transactions;
+    if (currentFilter === 'income') {
+      filteredTransactions = transactions.filter(t => t.type === 'income');
+    } else if (currentFilter === 'expense') {
+      filteredTransactions = transactions.filter(t => t.type === 'expense');
+    }
+
+    filteredTransactions.forEach(({ id, title, amount, type }) => {
+      const li = document.createElement('li');
+      li.className = type === 'income' ? 'income' : 'expense';
+
+      li.innerHTML = `
+        ${type === 'income' ? 'Income' : 'Expense'} - ${title}: ₹${amount.toFixed(2)}
+        <span class="transaction-actions">
+          <button class="edit-btn" data-id="${id}">Edit</button>
+          <button class="delete-btn" data-id="${id}">Delete</button>
+        </span>
+      `;
+
+      transactionList.appendChild(li);
+
+      if (type === 'income') totalIncome += amount;
+      else totalExpense += amount;
+    });
+
+    const balance = totalIncome - totalExpense;
     totalIncomeDisplay.textContent = totalIncome.toFixed(2);
     totalExpenseDisplay.textContent = totalExpense.toFixed(2);
-    balanceDisplay.textContent = (totalIncome - totalExpense).toFixed(2);
-  }, (error) => {
-    console.error("Error fetching transactions:", error);
-    showMessage("Failed to load transactions", 'red');
-  });
-}
+    balanceDisplay.textContent = balance.toFixed(2);
+
+    // Attach event listeners for edit and delete buttons
+    transactionList.querySelectorAll('.edit-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const transaction = transactions.find(t => t.id === id);
+        if (transaction) {
+          enterEditMode(id, transaction);
+        }
+      });
+    });
+
+    transactionList.querySelectorAll('.delete-btn').forEach(btn => {
+      btn.addEventListener('click',
