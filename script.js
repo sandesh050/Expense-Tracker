@@ -16,7 +16,7 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
-// 🔥 Firebase config
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyCIgRZCMqbRxo7jhYJCwVoIz3re6L_g8GM",
   authDomain: "expense-tracker-d5631.firebaseapp.com",
@@ -26,12 +26,12 @@ const firebaseConfig = {
   appId: "1:336895637396:web:f8a98f8a17ec6cf70a8181"
 };
 
-// 🔧 Initialize Firebase
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// 🔗 DOM Elements
+// DOM Elements
 const form = document.getElementById('transaction-form');
 const titleInput = document.getElementById('title');
 const amountInput = document.getElementById('amount');
@@ -42,19 +42,19 @@ const totalIncomeDisplay = document.getElementById('total-income');
 const totalExpenseDisplay = document.getElementById('total-expense');
 const balanceDisplay = document.getElementById('balance');
 const mainApp = document.getElementById('main-app');
+const authSection = document.getElementById('auth-section');
 
+// Auth elements
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
 const loginBtn = document.getElementById('login-btn');
 const signupBtn = document.getElementById('signup-btn');
 const logoutBtn = document.getElementById('logout-btn');
-const authSection = document.getElementById('auth-section');
 
-// 🔐 Auth Listeners
+// Auth Handlers
 loginBtn.addEventListener('click', () => {
   const email = emailInput.value;
   const password = passwordInput.value;
-
   signInWithEmailAndPassword(auth, email, password)
     .then(() => {
       message.textContent = "✅ Logged in!";
@@ -70,7 +70,6 @@ loginBtn.addEventListener('click', () => {
 signupBtn.addEventListener('click', () => {
   const email = emailInput.value;
   const password = passwordInput.value;
-
   createUserWithEmailAndPassword(auth, email, password)
     .then(() => {
       message.textContent = "✅ Signed up!";
@@ -90,17 +89,17 @@ logoutBtn.addEventListener('click', () => {
   });
 });
 
-// 👀 Auth State Observer
+// Auth state change listener
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    authSection.style.display = 'none';
-    logoutBtn.style.display = 'inline-block';
     mainApp.style.display = 'block';
-    loadTransactions();
+    logoutBtn.style.display = 'inline-block';
+    authSection.style.display = 'none';
+    loadTransactions(user.uid);
   } else {
-    authSection.style.display = 'block';
-    logoutBtn.style.display = 'none';
     mainApp.style.display = 'none';
+    logoutBtn.style.display = 'none';
+    authSection.style.display = 'block';
     transactionList.innerHTML = '';
     totalIncomeDisplay.textContent = '0';
     totalExpenseDisplay.textContent = '0';
@@ -108,7 +107,7 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// ➕ Add Transaction
+// Add transaction
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const title = titleInput.value.trim();
@@ -117,22 +116,25 @@ form.addEventListener('submit', async (e) => {
 
   if (!title || isNaN(amount)) return;
 
-  await addDoc(collection(db, 'transactions'), {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  await addDoc(collection(db, `users/${user.uid}/transactions`), {
     title,
     amount,
     type,
     timestamp: new Date()
   });
 
-  message.textContent = '✅ Added successfully!';
+  message.textContent = '✅ Transaction added!';
   message.style.color = 'green';
   titleInput.value = '';
   amountInput.value = '';
 });
 
-// 📊 Load Transactions
-function loadTransactions() {
-  const q = query(collection(db, 'transactions'), orderBy('timestamp', 'desc'));
+// Load transactions
+function loadTransactions(uid) {
+  const q = query(collection(db, `users/${uid}/transactions`), orderBy('timestamp', 'desc'));
 
   onSnapshot(q, (snapshot) => {
     transactionList.innerHTML = '';
@@ -146,11 +148,8 @@ function loadTransactions() {
       li.textContent = `${type === 'income' ? 'Income' : 'Expense'} - ${title}: ₹${amount}`;
       transactionList.appendChild(li);
 
-      if (type === 'income') {
-        totalIncome += amount;
-      } else {
-        totalExpense += amount;
-      }
+      if (type === 'income') totalIncome += amount;
+      else totalExpense += amount;
     });
 
     const balance = totalIncome - totalExpense;
