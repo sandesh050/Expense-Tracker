@@ -111,6 +111,7 @@ logoutBtn.addEventListener('click', () => {
 
 // Auth state change listener
 onAuthStateChanged(auth, (user) => {
+  console.log("Auth state changed. User:", user); // <-- debug log
   if (user) {
     mainApp.style.display = 'block';
     logoutBtn.style.display = 'inline-block';
