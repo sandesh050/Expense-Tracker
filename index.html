@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Expense Tracker</title>
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -10,23 +10,21 @@
   <div class="container">
     <h1>Expense Tracker 💸</h1>
 
-    <!-- 🔐 Auth Section -->
+    <!-- Auth Section -->
     <div class="auth-section" id="auth-section">
-      <h2>User Login / Sign Up</h2>
-      <input type="text" id="name" placeholder="Name (for signup)" />
+      <h2>User Login</h2>
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
       <div class="auth-buttons">
-        <button id="login-btn">Login</button>
-        <button id="signup-btn">Sign Up</button>
+        <button id="login-btn" type="button">Login</button>
+        <button id="signup-btn" type="button">Sign Up</button>
       </div>
     </div>
 
     <div id="message"></div>
 
-    <!-- 💰 Main App Section -->
+    <!-- Main App Section -->
     <div id="main-app" style="display: none;">
-      <h2 id="welcome-message"></h2>
       <form id="transaction-form">
         <input type="text" id="title" placeholder="Enter title" required />
         <input type="number" id="amount" placeholder="Enter amount" step="0.01" required />
@@ -34,8 +32,19 @@
           <option value="expense">Expense</option>
           <option value="income">Income</option>
         </select>
-        <button type="submit">Add</button>
+        <button type="submit" id="submit-btn">Add</button>
+        <button type="button" id="cancel-edit-btn" style="display:none; margin-top:10px;">Cancel Edit</button>
       </form>
+
+      <!-- Filter -->
+      <div class="filter-section">
+        <label for="filter">Filter Transactions:</label>
+        <select id="filter">
+          <option value="all">All</option>
+          <option value="income">Income</option>
+          <option value="expense">Expense</option>
+        </select>
+      </div>
 
       <div class="transactions-list">
         <h2>All Transactions</h2>
@@ -45,10 +54,10 @@
         <h2>Balance: ₹<span id="balance">0</span></h2>
       </div>
     </div>
-
-    <!-- 🔘 Logout Button -->
-    <button id="logout-btn" class="fixed-logout" style="display: none;">Logout</button>
   </div>
+
+  <!-- Logout button fixed at bottom center -->
+  <button id="logout-btn" style="display:none;">Logout</button>
 
   <script type="module" src="script.js"></script>
 </body>
