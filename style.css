@@ -1,153 +1,161 @@
 body {
   font-family: Arial, sans-serif;
-  max-width: 480px;
-  margin: 30px auto;
-  padding: 0 15px;
-  background-color: #f7f7f7;
+  background-color: #f0f2f5;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 20px 30px;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+}
+
+h1, h2, h3 {
+  text-align: center;
   color: #333;
 }
 
-h1, h2 {
-  text-align: center;
-}
-
-#auth-section, #main-app {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-
-input, select, button {
-  padding: 8px;
-  margin: 5px 0;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+.auth-section input,
+#transaction-form input,
+#transaction-form select {
   width: 100%;
+  padding: 10px;
+  margin: 8px 0 15px 0;
+  border-radius: 5px;
+  border: 1px solid #ccc;
   box-sizing: border-box;
+  font-size: 1rem;
 }
 
-.auth-buttons {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
+.auth-buttons button,
+#transaction-form button {
+  padding: 10px 20px;
+  margin: 5px;
+  cursor: pointer;
+  font-weight: 700;
+  border: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
 }
 
 .auth-buttons button {
-  flex: 1;
-  cursor: pointer;
-  background-color: #4CAF50;
+  background-color: #3498db;
   color: white;
-  border: none;
-  transition: background-color 0.3s ease;
 }
 
 .auth-buttons button:hover {
-  background-color: #45a049;
+  background-color: #2980b9;
 }
 
-#logout-btn {
-  cursor: pointer;
-  padding: 8px 16px;
-  background-color: #f44336;
-  border: none;
+#submit-btn {
+  background-color: #27ae60;
   color: white;
-  border-radius: 4px;
 }
 
-#logout-btn:hover {
-  background-color: #d32f2f;
+#submit-btn:hover {
+  background-color: #1e8449;
 }
 
-form {
-  margin-top: 20px;
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-form input, form select {
-  flex: 1 1 100%;
-}
-
-form button {
-  flex: 1 1 45%;
-  cursor: pointer;
-  background-color: #2196F3;
+#cancel-edit-btn {
+  background-color: #e67e22;
   color: white;
-  border: none;
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
 }
 
-form button:hover {
-  background-color: #1976d2;
+#cancel-edit-btn:hover {
+  background-color: #ca6f1e;
 }
 
 .filter-section {
-  margin: 15px 0;
+  margin: 20px 0;
   text-align: center;
 }
 
-#transaction-items {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  max-height: 300px;
-  overflow-y: auto;
-  border-top: 1px solid #ccc;
-  border-bottom: 1px solid #ccc;
+.filter-section label {
+  margin-right: 10px;
+  font-weight: 600;
 }
 
-#transaction-items li {
+.transactions-list ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.transactions-list li {
+  background-color: #fafafa;
+  padding: 12px 20px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  font-weight: 600;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 5px;
-  border-bottom: 1px solid #eee;
 }
 
-#transaction-items li.income {
-  background-color: #e0f7e9;
-  color: #2e7d32;
+.transactions-list li.income {
+  border-left: 5px solid #27ae60;
 }
 
-#transaction-items li.expense {
-  background-color: #fdecea;
-  color: #c62828;
+.transactions-list li.expense {
+  border-left: 5px solid #e74c3c;
 }
 
 .transaction-actions button {
   margin-left: 5px;
-  cursor: pointer;
-  background-color: transparent;
+  padding: 5px 10px;
+  font-weight: 700;
+  border-radius: 3px;
   border: none;
-  font-size: 0.9rem;
-  color: #555;
-  transition: color 0.3s ease;
+  cursor: pointer;
 }
 
-.transaction-actions button:hover {
-  color: #000;
+.transaction-actions .edit-btn {
+  background-color: #3498db;
+  color: white;
 }
 
-.totals {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
-  font-weight: bold;
+.transaction-actions .edit-btn:hover {
+  background-color: #2980b9;
+}
+
+.transaction-actions .delete-btn {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.transaction-actions .delete-btn:hover {
+  background-color: #c0392b;
 }
 
 #message {
   text-align: center;
-  margin-top: 10px;
-  font-weight: bold;
-  min-height: 20px;
+  margin: 10px 0;
+  font-weight: 700;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* Logout button fixed style */
+#logout-btn {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 25px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  z-index: 1000;
+  transition: background-color 0.3s ease;
+}
+
+#logout-btn:hover {
+  background-color: #c0392b;
 }
