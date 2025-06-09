@@ -12,6 +12,6 @@ A  web application to track personal expenses and income. Built using HTML, CSS,
 - Display summary of totals and balance
 - Responsive and clean user interface
 
-- group 6
+## Group 6
 - Sandesh Gupta
 - kenny Torres
