@@ -8,7 +8,9 @@ import {
   orderBy,
   deleteDoc,
   doc,
-  updateDoc
+  updateDoc,
+  setDoc,
+  getDoc
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 import {
@@ -46,11 +48,13 @@ const mainApp = document.getElementById('main-app');
 const authSection = document.getElementById('auth-section');
 
 // Auth elements
+const nameInput = document.getElementById('name');
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
 const loginBtn = document.getElementById('login-btn');
 const signupBtn = document.getElementById('signup-btn');
 const logoutBtn = document.getElementById('logout-btn');
+const welcomeMessage = document.getElementById('welcome-message');
 
 // Filter element
 const filterSelect = document.getElementById('filter');
@@ -58,8 +62,9 @@ const filterSelect = document.getElementById('filter');
 // Edit mode vars
 let editMode = false;
 let editDocId = null;
+let unsubscribeTransactions = null;
+let currentFilter = 'all';
 
-// Show message helper
 function showMessage(text, color = 'green') {
   message.textContent = text;
   message.style.color = color;
@@ -68,62 +73,71 @@ function showMessage(text, color = 'green') {
   }, 4000);
 }
 
-// Login button click
-loginBtn.addEventListener('click', () => {
+// Login
+loginBtn.addEventListener('click', async () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
 
-  if (!email || !password) {
-    showMessage('Please enter email and password', 'red');
-    return;
-  }
+  if (!email || !password) return showMessage('Please enter email and password', 'red');
 
-  signInWithEmailAndPassword(auth, email, password)
-    .then(() => {
-      showMessage("✅ Logged in!");
-      emailInput.value = '';
-      passwordInput.value = '';
-    })
-    .catch((error) => {
-      showMessage("❌ Login failed: " + error.message, 'red');
-    });
+  try {
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    showMessage("✅ Logged in!");
+    emailInput.value = '';
+    passwordInput.value = '';
+
+    // Get user's name
+    const docRef = doc(db, "users", result.user.uid);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const name = docSnap.data().name || 'User';
+      welcomeMessage.textContent = `Welcome, ${name}!`;
+    } else {
+      welcomeMessage.textContent = `Welcome!`;
+    }
+
+  } catch (error) {
+    showMessage("❌ Login failed: " + error.message, 'red');
+  }
 });
 
-// Signup button click
-signupBtn.addEventListener('click', () => {
+// Signup
+signupBtn.addEventListener('click', async () => {
+  const name = nameInput.value.trim();
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
 
-  if (!email || !password) {
-    showMessage('Please enter email and password', 'red');
-    return;
-  }
+  if (!name || !email || !password) return showMessage('Please fill all fields', 'red');
 
-  createUserWithEmailAndPassword(auth, email, password)
-    .then(() => {
-      showMessage("✅ Signed up!");
-      emailInput.value = '';
-      passwordInput.value = '';
-    })
-    .catch((error) => {
-      showMessage("❌ Signup failed: " + error.message, 'red');
-    });
+  try {
+    const result = await createUserWithEmailAndPassword(auth, email, password);
+    const uid = result.user.uid;
+
+    await setDoc(doc(db, "users", uid), { name });
+
+    showMessage("✅ Signed up!");
+    emailInput.value = '';
+    passwordInput.value = '';
+    nameInput.value = '';
+  } catch (error) {
+    showMessage("❌ Signup failed: " + error.message, 'red');
+  }
 });
 
-// Logout button click
+// Logout
 logoutBtn.addEventListener('click', () => {
   signOut(auth).then(() => {
     showMessage("👋 Logged out!", 'blue');
+    welcomeMessage.textContent = '';
   });
 });
 
-// Cancel edit button
+// Cancel edit
 const cancelEditBtn = document.getElementById('cancel-edit-btn');
 cancelEditBtn.addEventListener('click', () => {
   exitEditMode();
 });
 
-// Enter edit mode helper
 function enterEditMode(docId, data) {
   editMode = true;
   editDocId = docId;
@@ -134,7 +148,6 @@ function enterEditMode(docId, data) {
   cancelEditBtn.style.display = 'inline-block';
 }
 
-// Exit edit mode helper
 function exitEditMode() {
   editMode = false;
   editDocId = null;
@@ -145,15 +158,19 @@ function exitEditMode() {
   cancelEditBtn.style.display = 'none';
 }
 
-let unsubscribeTransactions = null;
-let currentFilter = 'all';
-
-// Auth state change listener
-onAuthStateChanged(auth, (user) => {
+// Auth state listener
+onAuthStateChanged(auth, async (user) => {
   if (user) {
     mainApp.style.display = 'block';
     logoutBtn.style.display = 'inline-block';
     authSection.style.display = 'none';
+
+    // Fetch and show name
+    const docSnap = await getDoc(doc(db, "users", user.uid));
+    if (docSnap.exists()) {
+      const name = docSnap.data().name || 'User';
+      welcomeMessage.textContent = `Welcome, ${name}!`;
+    }
 
     if (unsubscribeTransactions) unsubscribeTransactions();
     unsubscribeTransactions = loadTransactions(user.uid);
@@ -162,14 +179,12 @@ onAuthStateChanged(auth, (user) => {
     mainApp.style.display = 'none';
     logoutBtn.style.display = 'none';
     authSection.style.display = 'block';
-
     transactionList.innerHTML = '';
     totalIncomeDisplay.textContent = '0';
     totalExpenseDisplay.textContent = '0';
     balanceDisplay.textContent = '0';
-
+    welcomeMessage.textContent = '';
     exitEditMode();
-
     if (unsubscribeTransactions) {
       unsubscribeTransactions();
       unsubscribeTransactions = null;
@@ -177,34 +192,22 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// Add or Update transaction
+// Add/Update transaction
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const title = titleInput.value.trim();
   const amount = parseFloat(amountInput.value);
   const type = typeInput.value;
-
-  if (!title) {
-    showMessage('Please enter a title', 'red');
-    return;
-  }
-
-  if (isNaN(amount) || amount <= 0) {
-    showMessage('Please enter a valid positive amount', 'red');
-    return;
-  }
-
   const user = auth.currentUser;
-  if (!user) {
-    showMessage('You must be logged in to add transactions', 'red');
-    return;
-  }
+
+  if (!title) return showMessage('Please enter a title', 'red');
+  if (isNaN(amount) || amount <= 0) return showMessage('Enter a valid amount', 'red');
+  if (!user) return showMessage('Please log in first', 'red');
 
   try {
     if (editMode && editDocId) {
-      const docRef = doc(db, `users/${user.uid}/transactions`, editDocId);
-      await updateDoc(docRef, {
+      await updateDoc(doc(db, `users/${user.uid}/transactions`, editDocId), {
         title,
         amount,
         type,
@@ -225,39 +228,28 @@ form.addEventListener('submit', async (e) => {
     titleInput.value = '';
     amountInput.value = '';
     typeInput.value = 'expense';
-
   } catch (error) {
-    showMessage('❌ Failed to save transaction: ' + error.message, 'red');
+    showMessage('❌ Error: ' + error.message, 'red');
   }
 });
 
-// Load transactions with filter and display
+// Load & filter transactions
 function loadTransactions(uid) {
   const q = query(collection(db, `users/${uid}/transactions`), orderBy('timestamp', 'desc'));
 
   return onSnapshot(q, (snapshot) => {
     transactionList.innerHTML = '';
-    let totalIncome = 0;
-    let totalExpense = 0;
-
+    let totalIncome = 0, totalExpense = 0;
     const transactions = [];
 
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      transactions.push({ id: doc.id, ...data });
-    });
+    snapshot.forEach(doc => transactions.push({ id: doc.id, ...doc.data() }));
 
-    let filteredTransactions = transactions;
-    if (currentFilter === 'income') {
-      filteredTransactions = transactions.filter(t => t.type === 'income');
-    } else if (currentFilter === 'expense') {
-      filteredTransactions = transactions.filter(t => t.type === 'expense');
-    }
+    const filtered = currentFilter === 'all' ? transactions :
+      transactions.filter(t => t.type === currentFilter);
 
-    filteredTransactions.forEach(tx => {
+    filtered.forEach(tx => {
       const li = document.createElement('li');
       li.classList.add(tx.type);
-
       li.innerHTML = `
         <span>${tx.title} - ₹${tx.amount.toFixed(2)}</span>
         <div class="transaction-actions">
@@ -266,34 +258,23 @@ function loadTransactions(uid) {
         </div>
       `;
 
-      const editBtn = li.querySelector('.edit-btn');
-      const deleteBtn = li.querySelector('.delete-btn');
-
-      editBtn.addEventListener('click', () => {
-        enterEditMode(tx.id, tx);
-      });
-
-      deleteBtn.addEventListener('click', async () => {
+      li.querySelector('.edit-btn').addEventListener('click', () => enterEditMode(tx.id, tx));
+      li.querySelector('.delete-btn').addEventListener('click', async () => {
         if (confirm('Delete this transaction?')) {
           try {
             await deleteDoc(doc(db, `users/${uid}/transactions`, tx.id));
-            showMessage('✅ Transaction deleted!');
-            if (editMode && editDocId === tx.id) {
-              exitEditMode();
-            }
-          } catch (error) {
-            showMessage('❌ Failed to delete: ' + error.message, 'red');
+            showMessage('✅ Deleted');
+            if (editDocId === tx.id) exitEditMode();
+          } catch (e) {
+            showMessage('❌ Error deleting', 'red');
           }
         }
       });
 
       transactionList.appendChild(li);
 
-      if (tx.type === 'income') {
-        totalIncome += tx.amount;
-      } else if (tx.type === 'expense') {
-        totalExpense += tx.amount;
-      }
+      if (tx.type === 'income') totalIncome += tx.amount;
+      else totalExpense += tx.amount;
     });
 
     totalIncomeDisplay.textContent = totalIncome.toFixed(2);
@@ -302,15 +283,12 @@ function loadTransactions(uid) {
   });
 }
 
-// Filter select change
+// Filter select
 filterSelect.addEventListener('change', () => {
   currentFilter = filterSelect.value;
-
   const user = auth.currentUser;
   if (user && unsubscribeTransactions) {
     unsubscribeTransactions();
-  }
-  if (user) {
     unsubscribeTransactions = loadTransactions(user.uid);
   }
 });
