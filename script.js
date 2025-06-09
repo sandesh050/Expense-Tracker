@@ -5,7 +5,10 @@ import {
   addDoc,
   onSnapshot,
   query,
-  orderBy
+  orderBy,
+  setDoc,
+  doc,
+  getDoc
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 import {
@@ -26,7 +29,7 @@ const firebaseConfig = {
   appId: "1:336895637396:web:f8a98f8a17ec6cf70a8181"
 };
 
-// Initialize Firebase
+// Init
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
@@ -45,83 +48,72 @@ const mainApp = document.getElementById('main-app');
 const authSection = document.getElementById('auth-section');
 const welcomeMessage = document.getElementById('welcome-message');
 
-// Auth elements
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
+const nameInput = document.getElementById('name');
 const loginBtn = document.getElementById('login-btn');
 const signupBtn = document.getElementById('signup-btn');
 const logoutBtn = document.getElementById('logout-btn');
 
-// Helper to show messages
+// Show message
 function showMessage(text, color = 'green') {
   message.textContent = text;
   message.style.color = color;
-  setTimeout(() => {
-    message.textContent = '';
-  }, 4000);
+  setTimeout(() => message.textContent = '', 4000);
 }
 
-// Auth Handlers
+// Signup
+signupBtn.addEventListener('click', async () => {
+  const name = nameInput.value.trim();
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
+
+  if (!name || !email || !password) {
+    showMessage("Fill in all fields", 'red');
+    return;
+  }
+
+  try {
+    const userCred = await createUserWithEmailAndPassword(auth, email, password);
+    await setDoc(doc(db, "users", userCred.user.uid), { name });
+    showMessage("✅ Signed up successfully!");
+  } catch (error) {
+    showMessage("❌ " + error.message, 'red');
+  }
+});
+
+// Login
 loginBtn.addEventListener('click', () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
 
   if (!email || !password) {
-    showMessage('Please enter email and password', 'red');
+    showMessage('Enter email and password', 'red');
     return;
   }
 
   signInWithEmailAndPassword(auth, email, password)
-    .then(() => {
-      showMessage("✅ Logged in!");
-      emailInput.value = '';
-      passwordInput.value = '';
-    })
-    .catch((error) => {
-      showMessage("❌ Login failed: " + error.message, 'red');
-      console.error(error.message);
-    });
+    .then(() => showMessage("✅ Logged in!"))
+    .catch((err) => showMessage("❌ " + err.message, 'red'));
 });
 
-signupBtn.addEventListener('click', () => {
-  const email = emailInput.value.trim();
-  const password = passwordInput.value.trim();
-
-  if (!email || !password) {
-    showMessage('Please enter email and password', 'red');
-    return;
-  }
-
-  createUserWithEmailAndPassword(auth, email, password)
-    .then(() => {
-      showMessage("✅ Signed up!");
-      emailInput.value = '';
-      passwordInput.value = '';
-    })
-    .catch((error) => {
-      showMessage("❌ Signup failed: " + error.message, 'red');
-      console.error(error.message);
-    });
-});
-
+// Logout
 logoutBtn.addEventListener('click', () => {
-  signOut(auth).then(() => {
-    showMessage("👋 Logged out!", 'blue');
-  });
+  signOut(auth).then(() => showMessage("👋 Logged out!", 'blue'));
 });
 
-// Auth state change listener
-onAuthStateChanged(auth, (user) => {
+// Auth state
+onAuthStateChanged(auth, async (user) => {
   if (user) {
     mainApp.style.display = 'block';
-    logoutBtn.style.display = 'inline-block';
+    logoutBtn.style.display = 'block';
     authSection.style.display = 'none';
+
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    const name = userDoc.exists() ? userDoc.data().name : "User";
+    welcomeMessage.textContent = `Welcome, ${name}!`;
+
     loadTransactions(user.uid);
-
-    // Show welcome message
-    welcomeMessage.textContent = `Welcome, ${user.displayName || user.email}!`;
-    welcomeMessage.style.display = 'block';
-
   } else {
     mainApp.style.display = 'none';
     logoutBtn.style.display = 'none';
@@ -130,81 +122,56 @@ onAuthStateChanged(auth, (user) => {
     totalIncomeDisplay.textContent = '0';
     totalExpenseDisplay.textContent = '0';
     balanceDisplay.textContent = '0';
-
     welcomeMessage.textContent = '';
-    welcomeMessage.style.display = 'none';
   }
 });
 
-// Add transaction
+// Add Transaction
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const title = titleInput.value.trim();
   const amount = parseFloat(amountInput.value);
   const type = typeInput.value;
-
-  if (!title || isNaN(amount) || amount <= 0) {
-    showMessage('Please enter valid title and amount', 'red');
-    return;
-  }
-
   const user = auth.currentUser;
-  if (!user) {
-    showMessage('You must be logged in to add transactions', 'red');
+
+  if (!user || !title || isNaN(amount) || amount <= 0) {
+    showMessage('Invalid transaction data', 'red');
     return;
   }
 
   try {
-    await addDoc(collection(db, 'users', user.uid, 'transactions'), {
-      title,
-      amount,
-      type,
-      createdAt: new Date()
+    await addDoc(collection(db, `users/${user.uid}/transactions`), {
+      title, amount, type, timestamp: new Date()
     });
-    showMessage('Transaction added successfully!');
+    showMessage("✅ Transaction added!");
     form.reset();
   } catch (error) {
-    console.error(error);
-    showMessage('Error adding transaction', 'red');
+    showMessage("❌ Failed to add: " + error.message, 'red');
   }
 });
 
-// Load transactions and listen for changes
+// Load Transactions
 function loadTransactions(uid) {
-  const transactionsRef = collection(db, 'users', uid, 'transactions');
-  const q = query(transactionsRef, orderBy('createdAt', 'desc'));
-
-  // Clear current list
-  transactionList.innerHTML = '';
-  totalIncomeDisplay.textContent = '0';
-  totalExpenseDisplay.textContent = '0';
-  balanceDisplay.textContent = '0';
+  const q = query(collection(db, `users/${uid}/transactions`), orderBy('timestamp', 'desc'));
 
   onSnapshot(q, (snapshot) => {
-    let totalIncome = 0;
-    let totalExpense = 0;
     transactionList.innerHTML = '';
+    let totalIncome = 0, totalExpense = 0;
 
     snapshot.forEach((doc) => {
-      const data = doc.data();
+      const { title, amount, type } = doc.data();
       const li = document.createElement('li');
-      li.textContent = `${data.title} — ₹${data.amount.toFixed(2)}`;
-      li.classList.add(data.type);
-
+      li.className = type;
+      li.textContent = `${type === 'income' ? 'Income' : 'Expense'} - ${title}: ₹${amount.toFixed(2)}`;
       transactionList.appendChild(li);
 
-      if (data.type === 'income') {
-        totalIncome += data.amount;
-      } else {
-        totalExpense += data.amount;
-      }
+      if (type === 'income') totalIncome += amount;
+      else totalExpense += amount;
     });
 
     totalIncomeDisplay.textContent = totalIncome.toFixed(2);
     totalExpenseDisplay.textContent = totalExpense.toFixed(2);
     balanceDisplay.textContent = (totalIncome - totalExpense).toFixed(2);
-  }, (error) => {
-    console.error('Error loading transactions:', error);
   });
 }
