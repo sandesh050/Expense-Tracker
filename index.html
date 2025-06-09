@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Expense Tracker</title>
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -10,21 +10,20 @@
   <div class="container">
     <h1>Expense Tracker 💸</h1>
 
-    <!-- 🔐 Auth Section -->
+    <!-- Auth Section -->
     <div class="auth-section" id="auth-section">
       <h2>User Login</h2>
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
       <div class="auth-buttons">
-        <button id="login-btn">Login</button>
-        <button id="signup-btn">Sign Up</button>
-        <button id="logout-btn" style="display: none;">Logout</button>
+        <button id="login-btn" type="button">Login</button>
+        <button id="signup-btn" type="button">Sign Up</button>
       </div>
     </div>
 
     <div id="message"></div>
 
-    <!-- 💰 Main App Section -->
+    <!-- Main App Section -->
     <div id="main-app" style="display: none;">
       <form id="transaction-form">
         <input type="text" id="title" placeholder="Enter title" required />
@@ -56,6 +55,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Logout button fixed at bottom center -->
+  <button id="logout-btn" style="display:none;">Logout</button>
 
   <script type="module" src="script.js"></script>
 </body>
