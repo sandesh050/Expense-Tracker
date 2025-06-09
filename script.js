@@ -297,4 +297,35 @@ function loadTransactions(uid) {
     });
 
     transactionList.querySelectorAll('.delete-btn').forEach(btn => {
-      btn.addEventListener('click',
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        const user = auth.currentUser;
+        if (!user) {
+          showMessage('You must be logged in', 'red');
+          return;
+        }
+        if (confirm('Are you sure you want to delete this transaction?')) {
+          try {
+            await deleteDoc(doc(db, `users/${user.uid}/transactions`, id));
+            showMessage('✅ Transaction deleted');
+            // If currently editing this, exit edit mode
+            if (editMode && editDocId === id) exitEditMode();
+          } catch (error) {
+            showMessage('❌ Failed to delete transaction: ' + error.message, 'red');
+            console.error(error);
+          }
+        }
+      });
+    });
+  });
+}
+
+// Filter dropdown change handler
+filterSelect.addEventListener('change', () => {
+  currentFilter = filterSelect.value;
+  const user = auth.currentUser;
+  if (user && unsubscribeTransactions) {
+    unsubscribeTransactions();
+    unsubscribeTransactions = loadTransactions(user.uid);
+  }
+});
