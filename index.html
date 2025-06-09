@@ -18,20 +18,14 @@
       <div class="auth-buttons">
         <button id="login-btn">Login</button>
         <button id="signup-btn">Sign Up</button>
+        <button id="logout-btn" style="display: none;">Logout</button>
       </div>
     </div>
 
-    <!-- 🚪 Logout -->
-    <div class="auth-buttons">
-      <button id="logout-btn" style="display: none;">Logout</button>
-    </div>
-
-    <!-- ✅ Message -->
     <div id="message"></div>
 
-    <!-- 💰 Main App Section: Hidden until login -->
+    <!-- 💰 Main App Section -->
     <div id="main-app" style="display: none;">
-      <!-- 💰 Transaction Form -->
       <form id="transaction-form">
         <input type="text" id="title" placeholder="Enter title" required />
         <input type="number" id="amount" placeholder="Enter amount" required />
@@ -42,7 +36,6 @@
         <button type="submit">Add</button>
       </form>
 
-      <!-- 📋 Transaction List -->
       <div class="transactions-list">
         <h2>All Transactions</h2>
         <ul id="transaction-items"></ul>
@@ -53,7 +46,6 @@
     </div>
   </div>
 
-  <!-- Firebase Script -->
   <script type="module" src="script.js"></script>
 </body>
 </html>
