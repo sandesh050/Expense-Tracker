@@ -149,7 +149,7 @@ logoutBtn.addEventListener('click', () => {
 // Cancel edit button
 cancelEditBtn.addEventListener('click', exitEditMode);
 
-// Form submission (Add or Update transaction)
+// Form submission Add or Update transaction
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
 
