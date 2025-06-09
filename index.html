@@ -4,58 +4,60 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Expense Tracker</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="auth-section">
-    <h2>Expense Tracker Login / Signup</h2>
-    <input type="text" id="name" placeholder="Name (only for signup)" />
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Password" />
-    <div class="auth-buttons">
-      <button id="login-btn">Login</button>
-      <button id="signup-btn">Signup</button>
-    </div>
-    <p id="message"></p>
-  </div>
+  <div class="container">
+    <h1>Expense Tracker 💸</h1>
 
-  <div id="main-app" style="display:none;">
-    <div class="header">
-      <h1>Expense Tracker</h1>
-      <div>
-        <span id="welcome-message" style="font-weight:bold;"></span>
-        <button id="logout-btn" style="margin-left:20px;">Logout</button>
+    <!-- Auth Section -->
+    <div class="auth-section" id="auth-section">
+      <h2>User Login</h2>
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <div class="auth-buttons">
+        <button id="login-btn" type="button">Login</button>
+        <button id="signup-btn" type="button">Sign Up</button>
       </div>
     </div>
 
-    <form id="transaction-form">
-      <input type="text" id="title" placeholder="Transaction Title" />
-      <input type="number" id="amount" placeholder="Amount" min="0" step="0.01" />
-      <select id="type">
-        <option value="expense">Expense</option>
-        <option value="income">Income</option>
-      </select>
-      <button type="submit" id="submit-btn">Add</button>
-      <button type="button" id="cancel-edit-btn" style="display:none;">Cancel Edit</button>
-    </form>
+    <div id="message"></div>
 
-    <div class="filter-section">
-      <label for="filter">Filter:</label>
-      <select id="filter">
-        <option value="all">All</option>
-        <option value="income">Income</option>
-        <option value="expense">Expense</option>
-      </select>
-    </div>
+    <!-- Main App Section -->
+    <div id="main-app" style="display: none;">
+      <form id="transaction-form">
+        <input type="text" id="title" placeholder="Enter title" required />
+        <input type="number" id="amount" placeholder="Enter amount" step="0.01" required />
+        <select id="type">
+          <option value="expense">Expense</option>
+          <option value="income">Income</option>
+        </select>
+        <button type="submit" id="submit-btn">Add</button>
+        <button type="button" id="cancel-edit-btn" style="display:none; margin-top:10px;">Cancel Edit</button>
+      </form>
 
-    <ul id="transaction-items"></ul>
+      <!-- Filter -->
+      <div class="filter-section">
+        <label for="filter">Filter Transactions:</label>
+        <select id="filter">
+          <option value="all">All</option>
+          <option value="income">Income</option>
+          <option value="expense">Expense</option>
+        </select>
+      </div>
 
-    <div class="totals">
-      <div>Total Income: ₹<span id="total-income">0</span></div>
-      <div>Total Expense: ₹<span id="total-expense">0</span></div>
-      <div>Balance: ₹<span id="balance">0</span></div>
+      <div class="transactions-list">
+        <h2>All Transactions</h2>
+        <ul id="transaction-items"></ul>
+        <h3>Total Expenses: ₹<span id="total-expense">0</span></h3>
+        <h3>Total Income: ₹<span id="total-income">0</span></h3>
+        <h2>Balance: ₹<span id="balance">0</span></h2>
+      </div>
     </div>
   </div>
+
+  <!-- Logout button fixed at bottom center -->
+  <button id="logout-btn" style="display:none;">Logout</button>
 
   <script type="module" src="script.js"></script>
 </body>
