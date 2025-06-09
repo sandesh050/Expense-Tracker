@@ -51,41 +51,61 @@ const loginBtn = document.getElementById('login-btn');
 const signupBtn = document.getElementById('signup-btn');
 const logoutBtn = document.getElementById('logout-btn');
 
+// Helper to show messages
+function showMessage(text, color = 'green') {
+  message.textContent = text;
+  message.style.color = color;
+  setTimeout(() => {
+    message.textContent = '';
+  }, 4000);
+}
+
 // Auth Handlers
 loginBtn.addEventListener('click', () => {
-  const email = emailInput.value;
-  const password = passwordInput.value;
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
+
+  if (!email || !password) {
+    showMessage('Please enter email and password', 'red');
+    return;
+  }
+
   signInWithEmailAndPassword(auth, email, password)
     .then(() => {
-      message.textContent = "✅ Logged in!";
-      message.style.color = 'green';
+      showMessage("✅ Logged in!");
+      emailInput.value = '';
+      passwordInput.value = '';
     })
     .catch((error) => {
-      message.textContent = "❌ Login failed!";
-      message.style.color = 'red';
+      showMessage("❌ Login failed: " + error.message, 'red');
       console.error(error.message);
     });
 });
 
 signupBtn.addEventListener('click', () => {
-  const email = emailInput.value;
-  const password = passwordInput.value;
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
+
+  if (!email || !password) {
+    showMessage('Please enter email and password', 'red');
+    return;
+  }
+
   createUserWithEmailAndPassword(auth, email, password)
     .then(() => {
-      message.textContent = "✅ Signed up!";
-      message.style.color = 'green';
+      showMessage("✅ Signed up!");
+      emailInput.value = '';
+      passwordInput.value = '';
     })
     .catch((error) => {
-      message.textContent = "❌ Signup failed!";
-      message.style.color = 'red';
+      showMessage("❌ Signup failed: " + error.message, 'red');
       console.error(error.message);
     });
 });
 
 logoutBtn.addEventListener('click', () => {
   signOut(auth).then(() => {
-    message.textContent = "👋 Logged out!";
-    message.style.color = 'blue';
+    showMessage("👋 Logged out!", 'blue');
   });
 });
 
@@ -110,29 +130,45 @@ onAuthStateChanged(auth, (user) => {
 // Add transaction
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
+
   const title = titleInput.value.trim();
   const amount = parseFloat(amountInput.value);
   const type = typeInput.value;
 
-  if (!title || isNaN(amount)) return;
+  if (!title) {
+    showMessage('Please enter a title', 'red');
+    return;
+  }
+
+  if (isNaN(amount) || amount <= 0) {
+    showMessage('Please enter a valid positive amount', 'red');
+    return;
+  }
 
   const user = auth.currentUser;
-  if (!user) return;
+  if (!user) {
+    showMessage('You must be logged in to add transactions', 'red');
+    return;
+  }
 
-  await addDoc(collection(db, `users/${user.uid}/transactions`), {
-    title,
-    amount,
-    type,
-    timestamp: new Date()
-  });
+  try {
+    await addDoc(collection(db, `users/${user.uid}/transactions`), {
+      title,
+      amount,
+      type,
+      timestamp: new Date()
+    });
 
-  message.textContent = '✅ Transaction added!';
-  message.style.color = 'green';
-  titleInput.value = '';
-  amountInput.value = '';
+    showMessage('✅ Transaction added!');
+    titleInput.value = '';
+    amountInput.value = '';
+  } catch (error) {
+    showMessage('❌ Failed to add transaction: ' + error.message, 'red');
+    console.error(error);
+  }
 });
 
-// Load transactions
+// Load transactions and display totals
 function loadTransactions(uid) {
   const q = query(collection(db, `users/${uid}/transactions`), orderBy('timestamp', 'desc'));
 
@@ -145,7 +181,7 @@ function loadTransactions(uid) {
       const { title, amount, type } = doc.data();
       const li = document.createElement('li');
       li.className = type === 'income' ? 'income' : 'expense';
-      li.textContent = `${type === 'income' ? 'Income' : 'Expense'} - ${title}: ₹${amount}`;
+      li.textContent = `${type === 'income' ? 'Income' : 'Expense'} - ${title}: ₹${amount.toFixed(2)}`;
       transactionList.appendChild(li);
 
       if (type === 'income') totalIncome += amount;
@@ -153,8 +189,11 @@ function loadTransactions(uid) {
     });
 
     const balance = totalIncome - totalExpense;
-    totalIncomeDisplay.textContent = totalIncome;
-    totalExpenseDisplay.textContent = totalExpense;
-    balanceDisplay.textContent = balance;
+    totalIncomeDisplay.textContent = totalIncome.toFixed(2);
+    totalExpenseDisplay.textContent = totalExpense.toFixed(2);
+    balanceDisplay.textContent = balance.toFixed(2);
+  }, (error) => {
+    showMessage('Error loading transactions: ' + error.message, 'red');
+    console.error(error);
   });
 }
