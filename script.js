@@ -51,7 +51,7 @@ const loginBtn = document.getElementById('login-btn');
 const signupBtn = document.getElementById('signup-btn');
 const logoutBtn = document.getElementById('logout-btn');
 
-// Helper to show messages
+// Show messages helper
 function showMessage(text, color = 'green') {
   message.textContent = text;
   message.style.color = color;
@@ -60,7 +60,7 @@ function showMessage(text, color = 'green') {
   }, 4000);
 }
 
-// Auth Handlers
+// Login handler
 loginBtn.addEventListener('click', () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
@@ -82,6 +82,7 @@ loginBtn.addEventListener('click', () => {
     });
 });
 
+// Signup handler
 signupBtn.addEventListener('click', () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
@@ -103,24 +104,28 @@ signupBtn.addEventListener('click', () => {
     });
 });
 
+// Logout handler
 logoutBtn.addEventListener('click', () => {
   signOut(auth).then(() => {
     showMessage("👋 Logged out!", 'blue');
   });
 });
 
-// Auth state change listener
+// Listen to auth state changes
 onAuthStateChanged(auth, (user) => {
-  console.log("Auth state changed. User:", user); // <-- debug log
   if (user) {
+    // Show main app and logout btn, hide auth form
     mainApp.style.display = 'block';
     logoutBtn.style.display = 'inline-block';
     authSection.style.display = 'none';
     loadTransactions(user.uid);
   } else {
+    // Hide main app and logout btn, show auth form
     mainApp.style.display = 'none';
     logoutBtn.style.display = 'none';
     authSection.style.display = 'block';
+
+    // Clear data display
     transactionList.innerHTML = '';
     totalIncomeDisplay.textContent = '0';
     totalExpenseDisplay.textContent = '0';
@@ -128,73 +133,78 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// Add transaction
+// Add new transaction
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
+
+  const user = auth.currentUser;
+  if (!user) {
+    showMessage("You must be logged in to add transactions", 'red');
+    return;
+  }
 
   const title = titleInput.value.trim();
   const amount = parseFloat(amountInput.value);
   const type = typeInput.value;
 
-  if (!title) {
-    showMessage('Please enter a title', 'red');
-    return;
-  }
-
-  if (isNaN(amount) || amount <= 0) {
-    showMessage('Please enter a valid positive amount', 'red');
-    return;
-  }
-
-  const user = auth.currentUser;
-  if (!user) {
-    showMessage('You must be logged in to add transactions', 'red');
+  if (!title || isNaN(amount) || amount <= 0) {
+    showMessage("Please enter valid title and amount", 'red');
     return;
   }
 
   try {
-    await addDoc(collection(db, `users/${user.uid}/transactions`), {
+    await addDoc(collection(db, "users", user.uid, "transactions"), {
       title,
       amount,
       type,
-      timestamp: new Date()
+      timestamp: Date.now()
     });
 
-    showMessage('✅ Transaction added!');
     titleInput.value = '';
     amountInput.value = '';
+    showMessage("Transaction added!");
   } catch (error) {
-    showMessage('❌ Failed to add transaction: ' + error.message, 'red');
-    console.error(error);
+    console.error("Error adding document: ", error);
+    showMessage("Failed to add transaction", 'red');
   }
 });
 
-// Load transactions and display totals
-function loadTransactions(uid) {
-  const q = query(collection(db, `users/${uid}/transactions`), orderBy('timestamp', 'desc'));
+let unsubscribe = null;
 
-  onSnapshot(q, (snapshot) => {
-    transactionList.innerHTML = '';
+// Load transactions in realtime
+function loadTransactions(uid) {
+  if (unsubscribe) {
+    unsubscribe(); // Unsubscribe previous listener if any
+  }
+
+  const q = query(collection(db, "users", uid, "transactions"), orderBy("timestamp", "desc"));
+
+  unsubscribe = onSnapshot(q, (snapshot) => {
     let totalIncome = 0;
     let totalExpense = 0;
 
+    transactionList.innerHTML = '';
+
     snapshot.forEach((doc) => {
-      const { title, amount, type } = doc.data();
+      const data = doc.data();
+
       const li = document.createElement('li');
-      li.className = type === 'income' ? 'income' : 'expense';
-      li.textContent = `${type === 'income' ? 'Income' : 'Expense'} - ${title}: ₹${amount.toFixed(2)}`;
+      li.textContent = `${data.title} - ₹${data.amount.toFixed(2)}`;
+      li.classList.add(data.type === 'income' ? 'income' : 'expense');
       transactionList.appendChild(li);
 
-      if (type === 'income') totalIncome += amount;
-      else totalExpense += amount;
+      if (data.type === 'income') {
+        totalIncome += data.amount;
+      } else {
+        totalExpense += data.amount;
+      }
     });
 
-    const balance = totalIncome - totalExpense;
     totalIncomeDisplay.textContent = totalIncome.toFixed(2);
     totalExpenseDisplay.textContent = totalExpense.toFixed(2);
-    balanceDisplay.textContent = balance.toFixed(2);
+    balanceDisplay.textContent = (totalIncome - totalExpense).toFixed(2);
   }, (error) => {
-    showMessage('Error loading transactions: ' + error.message, 'red');
-    console.error(error);
+    console.error("Error fetching transactions:", error);
+    showMessage("Failed to load transactions", 'red');
   });
 }
